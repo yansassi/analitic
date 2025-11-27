@@ -191,6 +191,34 @@ export interface OperatingSystemData {
   duracao_media_visualizacao_segundos: number;
 }
 
+export interface ContentTypeData {
+  tipo_conteudo: string;
+  visualizacoes_intencionais: number;
+  inscritos: number;
+  porcentagem_visualizada_media: number;
+  videos_publicados: number;
+  impressoes: number;
+  taxa_cliques_impressoes: number;
+  continuaram_assistindo: number;
+  espectadores_unicos: number;
+  novos_espectadores: number;
+  espectadores_recorrentes_total: number;
+  espectadores_casuais: number;
+  espectadores_recorrentes: number;
+  hypes: number;
+  pontos_hype: number;
+  inscricoes_obtidas: number;
+  inscricoes_perdidas: number;
+  marcacoes_gostei: number;
+  marcacoes_nao_gostei: number;
+  gostei_vs_nao_gostei_pct: number;
+  compartilhamentos: number;
+  comentarios_adicionados: number;
+  visualizacoes: number;
+  tempo_exibicao_horas: number;
+  duracao_media_visualizacao_segundos: number;
+}
+
 export interface AudienceBehaviorData {
   tipo_publico: string;
   visualizacoes_intencionais: number;
@@ -219,6 +247,30 @@ export interface DeviceTypeTimeSeriesData {
   visualizacoes_intencionais: number;
 }
 
+export interface OperatingSystemTimeSeriesData {
+  data: string;
+  sistema_operacional: string;
+  visualizacoes_intencionais: number;
+}
+
+export interface TrafficSourceTimeSeriesData {
+  data: string;
+  origem_trafego: string;
+  visualizacoes_intencionais: number;
+}
+
+export interface CountryTimeSeriesData {
+  data: string;
+  pais_codigo: string;
+  visualizacoes_intencionais: number;
+}
+
+export interface CityTimeSeriesData {
+  data: string;
+  cidade_id: string;
+  visualizacoes_intencionais: number;
+}
+
 export interface ProcessedData {
   videos: VideoData[];
   countries: CountryData[];
@@ -230,10 +282,15 @@ export interface ProcessedData {
   subscriptionStatus: SubscriptionStatusData[];
   contentType: ContentTypeData[];
   deviceType: DeviceTypeData[];
-  deviceTypeTimeSeries?: DeviceTypeTimeSeriesData[];
   operatingSystem: OperatingSystemData[];
   audienceBehavior: AudienceBehaviorData[];
-  timeSeries?: TimeSeriesData[];
+
+  // Time Series Data for Filtering
+  deviceTypeTimeSeries?: DeviceTypeTimeSeriesData[];
+  operatingSystemTimeSeries?: OperatingSystemTimeSeriesData[];
+  trafficSourceTimeSeries?: TrafficSourceTimeSeriesData[];
+  countriesTimeSeries?: CountryTimeSeriesData[];
+  citiesTimeSeries?: CityTimeSeriesData[];
 }
 
 // --- NOVOS TIPOS DO INSTAGRAM ---
@@ -268,6 +325,10 @@ export interface InstagramPost {
   comentarios: number;
   compartilhamentos: number;
   salvamentos: number;
+  duracao?: number;
+  seguimentos?: number;
+  nomeConta?: string;
+  nomeUsuario?: string;
 }
 
 export interface InstagramData {
@@ -294,5 +355,77 @@ export interface InstagramData {
     totalInteracoes: number;
     totalCliquesLink: number;
     totalSalvamentos: number;
+  };
+}
+
+// --- NOVOS TIPOS DO TIKTOK ---
+
+export interface TikTokMetric {
+  date: string;
+  value: number;
+}
+
+export interface TikTokPost {
+  id: string;
+  title: string;
+  link: string;
+  date: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+export interface TikTokDemographic {
+  category: string;
+  percentage: number;
+}
+
+export interface TikTokData {
+  overview: {
+    videoViews: TikTokMetric[];
+    profileViews: TikTokMetric[];
+    likes: TikTokMetric[];
+    comments: TikTokMetric[];
+    shares: TikTokMetric[];
+    followers: TikTokMetric[];
+  };
+  posts: TikTokPost[];
+  audience: {
+    gender: TikTokDemographic[];
+    territories: TikTokDemographic[];
+    activity: { hour: number; value: number }[];
+  };
+  summary: {
+    totalViews: number;
+    totalLikes: number;
+    totalComments: number;
+    totalShares: number;
+    totalFollowers: number;
+    totalPosts: number;
+  };
+}
+
+// --- TIPOS PARA COMPARAÇÃO DE PLATAFORMAS ---
+
+export interface PlatformComparison {
+  platform: 'youtube' | 'instagram' | 'tiktok';
+  platformName: string;
+  color: string;
+  totalViews: number;
+  totalReach: number;
+  totalEngagement: number;
+  engagementRate: number;
+  followersGrowth: number;
+  totalPosts: number;
+  avgViewsPerPost: number;
+  saves: number; // Instagram salvamentos ou YouTube inscrições
+}
+
+export interface ComparisonData {
+  platforms: PlatformComparison[];
+  period: {
+    start: string;
+    end: string;
   };
 }

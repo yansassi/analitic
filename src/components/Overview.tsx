@@ -1,6 +1,6 @@
 import { ProcessedData } from '../types';
-import { 
-  Eye, Clock, Users, TrendingUp, ThumbsUp, UserPlus, 
+import {
+  Eye, Clock, Users, TrendingUp, ThumbsUp, UserPlus,
   Target, Zap, Award, ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
 
@@ -37,31 +37,52 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
   const totalImpressions = data.videos.reduce((sum, v) => sum + (v.impressoes || 0), 0);
 
   // Métricas calculadas
-  const avgEngagement = data.videos.length > 0 
-    ? data.videos.reduce((sum, v) => sum + v.porcentagem_visualizada_media, 0) / data.videos.length 
+  const avgEngagement = data.videos.length > 0
+    ? data.videos.reduce((sum, v) => sum + v.porcentagem_visualizada_media, 0) / data.videos.length
     : 0;
-  
-  const avgCTR = data.videos.length > 0 
-    ? data.videos.reduce((sum, v) => sum + (v.taxa_cliques_impressoes || 0), 0) / data.videos.length 
+
+  const avgCTR = data.videos.length > 0
+    ? data.videos.reduce((sum, v) => sum + (v.taxa_cliques_impressoes || 0), 0) / data.videos.length
     : 0;
 
   const totalUniqueViewers = data.videos.reduce((sum, v) => sum + (v.espectadores_unicos || 0), 0);
-  
-  const avgViewDuration = totalViews > 0 
-    ? (totalWatchTime * 3600) / totalViews 
+
+  const avgViewDuration = totalViews > 0
+    ? (totalWatchTime * 3600) / totalViews
     : 0;
 
   // Taxa de conversão (views para inscrições)
   const conversionRate = totalViews > 0 ? (totalSubscribers / totalViews) * 100 : 0;
 
   // Engagement rate
-  const engagementRate = totalViews > 0 
-    ? ((totalLikes + totalComments + totalShares) / totalViews) * 100 
+  const engagementRate = totalViews > 0
+    ? ((totalLikes + totalComments + totalShares) / totalViews) * 100
     : 0;
 
-  // Análise de conteúdo
-  const shortsData = data.contentType.find(c => c.tipo_conteudo === 'Shorts');
-  const videosData = data.contentType.find(c => c.tipo_conteudo === 'Vídeos');
+  // Análise de conteúdo baseada nos vídeos filtrados
+  const shortsVideos = data.videos.filter(v => v.duracao_segundos <= 60);
+  const longVideos = data.videos.filter(v => v.duracao_segundos > 60);
+
+  const calculateStats = (videos: typeof data.videos) => {
+    const totalViews = videos.reduce((sum, v) => sum + v.visualizacoes, 0);
+    const totalImpressions = videos.reduce((sum, v) => sum + (v.impressoes || 0), 0);
+
+    // Calcular cliques totais para CTR médio ponderado
+    const totalClicks = videos.reduce((sum, v) => sum + ((v.impressoes || 0) * (v.taxa_cliques_impressoes || 0) / 100), 0);
+    const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
+    const totalSubs = videos.reduce((sum, v) => sum + v.inscricoes_obtidas, 0);
+
+    return {
+      videos_publicados: videos.length,
+      visualizacoes: totalViews,
+      taxa_cliques_impressoes: avgCTR,
+      inscricoes_obtidas: totalSubs
+    };
+  };
+
+  const shortsData = shortsVideos.length > 0 ? calculateStats(shortsVideos) : null;
+  const videosData = longVideos.length > 0 ? calculateStats(longVideos) : null;
 
   // Top 5 vídeos
   const topVideos = [...data.videos]
@@ -73,10 +94,10 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
     if (data.videos.length < 2) return 'neutral';
     const recentVideos = data.videos.slice(-3);
     const olderVideos = data.videos.slice(0, 3);
-    
+
     const recentAvg = recentVideos.reduce((sum, v) => sum + v.visualizacoes, 0) / recentVideos.length;
     const olderAvg = olderVideos.reduce((sum, v) => sum + v.visualizacoes, 0) / olderVideos.length;
-    
+
     if (recentAvg > olderAvg * 1.1) return 'up';
     if (recentAvg < olderAvg * 0.9) return 'down';
     return 'neutral';
@@ -84,24 +105,23 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
 
   const growthTrend = getGrowthTrend();
 
-  const MetricCard = ({ 
-    title, 
-    value, 
-    subtitle, 
-    icon: Icon, 
-    color, 
-    trend 
-  }: { 
-    title: string; 
-    value: string; 
-    subtitle: string; 
-    icon: any; 
+  const MetricCard = ({
+    title,
+    value,
+    subtitle,
+    icon: Icon,
+    color,
+    trend
+  }: {
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: any;
     color: string;
     trend?: 'up' | 'down' | 'neutral';
   }) => (
-    <div className={`rounded-xl p-6 transition-all hover:scale-105 ${
-      darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-lg'
-    }`}>
+    <div className={`rounded-xl p-6 transition-all hover:scale-105 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-lg'
+      }`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           {title}
@@ -120,11 +140,10 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
           </p>
         </div>
         {trend && (
-          <div className={`flex items-center gap-1 ${
-            trend === 'up' ? 'text-green-600' : 
-            trend === 'down' ? 'text-red-600' : 
-            'text-gray-600'
-          }`}>
+          <div className={`flex items-center gap-1 ${trend === 'up' ? 'text-green-600' :
+              trend === 'down' ? 'text-red-600' :
+                'text-gray-600'
+            }`}>
             {trend === 'up' && <ArrowUp className="w-4 h-4" />}
             {trend === 'down' && <ArrowDown className="w-4 h-4" />}
             {trend === 'neutral' && <Minus className="w-4 h-4" />}
@@ -203,21 +222,19 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
 
       {/* Shorts vs Vídeos */}
       {(shortsData || videosData) && (
-        <div className={`rounded-xl p-6 ${
-          darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-lg'
-        }`}>
+        <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-lg'
+          }`}>
           <div className="flex items-center gap-2 mb-6">
             <Award className="w-6 h-6 text-purple-600" />
             <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Performance por Tipo de Conteúdo
             </h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {shortsData && (
-              <div className={`p-6 rounded-lg ${
-                darkMode ? 'bg-gray-700/50' : 'bg-gradient-to-br from-purple-50 to-pink-50'
-              }`}>
+              <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gradient-to-br from-purple-50 to-pink-50'
+                }`}>
                 <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   📱 Shorts
                 </h3>
@@ -249,11 +266,10 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
                 </div>
               </div>
             )}
-            
+
             {videosData && (
-              <div className={`p-6 rounded-lg ${
-                darkMode ? 'bg-gray-700/50' : 'bg-gradient-to-br from-blue-50 to-indigo-50'
-              }`}>
+              <div className={`p-6 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gradient-to-br from-blue-50 to-indigo-50'
+                }`}>
                 <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   🎬 Vídeos Longos
                 </h3>
@@ -290,40 +306,36 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
       )}
 
       {/* Top 5 Vídeos */}
-      <div className={`rounded-xl p-6 ${
-        darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-lg'
-      }`}>
+      <div className={`rounded-xl p-6 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white shadow-lg'
+        }`}>
         <div className="flex items-center gap-2 mb-6">
           <TrendingUp className="w-6 h-6 text-green-600" />
           <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Top 5 Vídeos Mais Vistos
           </h2>
         </div>
-        
+
         <div className="space-y-4">
           {topVideos.map((video, index) => (
             <div
               key={`top-video-${video.id}-${index}`}
-              className={`flex items-center gap-4 p-4 rounded-lg transition-all hover:scale-[1.02] ${
-                darkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-50 hover:bg-gray-100'
-              }`}
+              className={`flex items-center gap-4 p-4 rounded-lg transition-all hover:scale-[1.02] ${darkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-50 hover:bg-gray-100'
+                }`}
             >
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-lg ${
-                index === 0 ? 'bg-yellow-500 text-white' :
-                index === 1 ? 'bg-gray-400 text-white' :
-                index === 2 ? 'bg-orange-600 text-white' :
-                darkMode ? 'bg-gray-600 text-white' : 'bg-gray-300 text-gray-700'
-              }`}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-lg ${index === 0 ? 'bg-yellow-500 text-white' :
+                  index === 1 ? 'bg-gray-400 text-white' :
+                    index === 2 ? 'bg-orange-600 text-white' :
+                      darkMode ? 'bg-gray-600 text-white' : 'bg-gray-300 text-gray-700'
+                }`}>
                 {index + 1}
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <h3 className={`font-semibold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {video.titulo}
                 </h3>
-                <div className={`flex items-center gap-4 mt-1 text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
+                <div className={`flex items-center gap-4 mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                   <span>{formatNumber(video.visualizacoes)} views</span>
                   <span>•</span>
                   <span>{formatDecimal(video.porcentagem_visualizada_media, 1)}% retido</span>
@@ -331,7 +343,7 @@ const Overview = ({ data, darkMode }: OverviewProps) => {
                   <span>+{video.inscricoes_obtidas} inscritos</span>
                 </div>
               </div>
-              
+
               <div className="flex flex-col items-end gap-1">
                 <span className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {formatNumber(video.marcacoes_gostei)}
